@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SmartPark - Dashboard</title>
+    <link rel="stylesheet" th:href="@{/css/smartpark.css}" />
+</head>
+<body>
+<nav class="main-navbar">
+    <div class="brand" aria-label="SmartPark logo">
+        <span class="brand-mark">P</span>
+        <span class="brand-text">Smart<span>Park</span></span>
+    </div>
+    <div class="nav-items">
+        <a class="nav-item active" th:href="@{/dashboard}">Inicio</a>
+        <a class="nav-item" th:href="@{/registrar}">Registrar</a>
+        <a class="nav-item" th:href="@{/modulo}">Módulo</a>
+        <a class="nav-item" th:href="@{/datos}">Datos</a>
+        <a class="nav-item logout" th:href="@{/logout}">Salir</a>
+    </div>
+</nav>
+
+<main class="page-shell dashboard-page">
+    <section class="hero-banner">
+        <div class="hero-content">
+            <span class="eyebrow">Panel de control</span>
+            <h2>Bienvenido a SmartPark</h2>
+            <p>Gestión rápida y eficiente de tu estacionamiento. Controla en tiempo real la ocupación, tarifas y registros de vehículos.</p>
+        </div>
+    </section>
+
+    <section class="metrics-grid compact">
+        <article class="metric-card">
+            <div class="metric-icon warning-icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3"></path><rect x="9" y="11" width="14" height="10" rx="2"></rect><circle cx="12" cy="16" r="1"></circle></svg>
+            </div>
+            <div class="metric-value" th:text="${occupied}">0</div>
+            <div class="metric-label">Ocupados</div>
+        </article>
+        <article class="metric-card">
+            <div class="metric-icon success-icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M9 9h6M9 12h6M9 15h4"></path></svg>
+            </div>
+            <div class="metric-value primary" th:text="${free}">100</div>
+            <div class="metric-label">Libres</div>
+        </article>
+    </section>
+
+    <section class="pricing-card">
+        <div class="section-title-row">
+            <div class="section-icon accent">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
+            </div>
+            <h3>Tarifa de estacionamiento</h3>
+        </div>
+        <div class="pricing-grid">
+            <div class="pricing-box">
+                <small>Tarifa por hora</small>
+                <strong th:text="${ratePerHour}">S/ 6.00</strong>
+            </div>
+            <div class="pricing-box">
+                <small>Tarifa por minuto</small>
+                <strong th:text="${ratePerMinute}">S/ 0.10</strong>
+            </div>
+        </div>
+        <div class="equivalence-box">
+            <small>Equivalencias</small>
+            <div class="equivalence-grid">
+                <div><span>15 min</span><strong>S/1.50</strong></div>
+                <div><span>30 min</span><strong>S/3.00</strong></div>
+                <div><span>60 min</span><strong>S/6.00</strong></div>
+                <div><span>90 min</span><strong>S/9.00</strong></div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer class="main-footer">© 2026 SmartPark. Todos los derechos reservados.</footer>
+<script th:src="@{/js/smartpark.js}"></script>
+</body>
+</html>

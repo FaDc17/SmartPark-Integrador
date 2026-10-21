@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SmartPark - Datos y estadísticas</title>
+    <link rel="stylesheet" th:href="@{/css/smartpark.css}" />
+</head>
+<body>
+<nav class="main-navbar">
+    <div class="brand" aria-label="SmartPark logo">
+        <span class="brand-mark">P</span>
+        <span class="brand-text">Smart<span>Park</span></span>
+    </div>
+    <div class="nav-items">
+        <a class="nav-item" th:href="@{/dashboard}">Inicio</a>
+        <a class="nav-item" th:href="@{/registrar}">Registrar</a>
+        <a class="nav-item" th:href="@{/modulo}">Módulo</a>
+        <a class="nav-item active" th:href="@{/datos}">Datos</a>
+        <a class="nav-item logout" th:href="@{/logout}">Salir</a>
+    </div>
+</nav>
+
+<main class="page-shell wide-shell stats-page">
+    <div class="section-header">
+        <h1>Datos y estadísticas</h1>
+        <p>Resumen del rendimiento y actividad del estacionamiento.</p>
+        <span class="demo-badge">Datos demostrativos</span>
+    </div>
+
+    <section class="stats-kpis">
+        <div class="kpi-card">
+            <div class="kpi-icon teal-bg"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M9 9h6M9 12h6M9 15h4"></path></svg></div>
+            <small>Disponibilidad actual</small>
+            <strong class="teal-text">32%</strong>
+            <span>En tiempo real</span>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon orange-bg"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg></div>
+            <small>Permanencia semanal</small>
+            <strong class="orange-text">1h 40min</strong>
+            <span>Promedio esta semana</span>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon blue-bg"><svg viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"></path></svg></div>
+            <small>Uso capacidad semanal</small>
+            <strong class="blue-text">78.6%</strong>
+            <span>550 / 700 vehículos</span>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon purple-bg"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg></div>
+            <small>Ingresos del mes</small>
+            <strong class="purple-text">S/5,800</strong>
+            <span>Octubre 2026</span>
+        </div>
+    </section>
+
+    <section class="dashboard-grid two-col">
+        <article class="chart-card">
+            <h3>Porcentaje de espacios disponibles</h3>
+            <p>Libres / Capacidad total (100) × 100</p>
+            <div class="chart-layout">
+                <div class="donut-chart" style="background: conic-gradient(#1BBC9B 0 32%, #E2EDF5 32% 100%);">
+                    <div class="donut-center"><strong>32%</strong><span>disponible</span></div>
+                </div>
+                <div class="legend-list">
+                    <div class="legend-item">
+                        <span class="legend-swatch teal"></span>
+                        <div>
+                            <small>Disponibles</small>
+                            <strong>32 esp. (32%)</strong>
+                        </div>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-swatch gray"></span>
+                        <div>
+                            <small>Ocupados</small>
+                            <strong>68 esp. (68%)</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+
+        <article class="chart-card">
+            <div class="chart-header">
+                <h3>Tiempo promedio de permanencia semanal</h3>
+                <strong class="orange-text">1h 40m</strong>
+            </div>
+            <p>Promedio semanal de permanencia</p>
+            <div class="bar-chart" th:each="item : ${tiempoSemanaData}">
+                <div class="bar-label" th:text="${item.semana}">Semana 1</div>
+                <div class="bar-track"><span class="bar-fill orange" th:style="|width: ${item['minutos'] * 100.0 / 100}%|"></span></div>
+                <div class="bar-value" th:text="${item.minutos + ' min'}">80 min</div>
+            </div>
+        </article>
+    </section>
+
+    <section class="dashboard-grid two-col">
+        <article class="chart-card">
+            <h3>Porcentaje de vehículos estacionados en la semana</h3>
+            <p>Total: 550 vehículos · Capacidad teórica: 700</p>
+            <div class="weekly-usage">78.6% de capacidad semanal utilizada</div>
+            <div class="bar-chart compact-bars" th:each="item : ${vehiculosDiaData}">
+                <div class="bar-label" th:text="${item.dia}">Lun</div>
+                <div class="bar-track"><span class="bar-fill blue" th:style="|width: ${item['vehiculos'] * 100.0 / 100}%|"></span></div>
+                <div class="bar-value" th:text="${item.vehiculos}">65</div>
+            </div>
+        </article>
+
+        <article class="chart-card">
+            <div class="chart-header">
+                <h3>Porcentaje de ingresos por mes</h3>
+                <strong class="purple-text">Oct: S/6,200</strong>
+            </div>
+            <p>Ingresos mensuales hasta octubre</p>
+            <div class="line-chart">
+                <div class="line-grid" style="grid-template-columns: repeat(10, minmax(0, 1fr));">
+                    <div class="line-point" th:each="item : ${ingresosData}"
+                         th:style="|--line-height: ${item['monto'] * 100.0 / 6200}%|">
+                        <span class="line-marker" th:style="|height: ${item['monto'] * 100.0 / 6200}%|"
+                              th:title="|${item['mes']}: S/${item['monto']}|"></span>
+                        <small th:text="${item.mes}">Ene</small>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </section>
+</main>
+
+<footer class="main-footer">© 2026 SmartPark. Todos los derechos reservados.</footer>
+<script th:src="@{/js/smartpark.js}"></script>
+</body>
+</html>

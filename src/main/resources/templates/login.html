@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SmartPark - Iniciar sesión</title>
+    <link rel="stylesheet" th:href="@{/css/smartpark.css}" />
+</head>
+<body class="auth-page">
+<div class="topbar-simple">
+    <div class="brand" aria-label="SmartPark logo">
+        <span class="brand-mark">P</span>
+        <span class="brand-text">Smart<span>Park</span></span>
+    </div>
+</div>
+
+<main class="auth-shell">
+    <section class="auth-card">
+        <div class="auth-header">
+            <div class="brand brand-large login-brand">
+                <span class="brand-mark">P</span>
+                <span class="brand-text">Smart<span>Park</span></span>
+            </div>
+            <h1>Iniciar sesión</h1>
+            <p>Accede a tu panel de gestión</p>
+        </div>
+
+        <form th:action="@{/login}" method="post" class="smartpark-form">
+            <div class="field-group">
+                <label>Usuario o correo electrónico</label>
+                <div class="input-wrap">
+                    <span class="input-icon">
+                        <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 7-10 7L2 7"></path></svg>
+                    </span>
+                    <input type="text" name="email" placeholder="admin o ejemplo@correo.com" />
+                </div>
+            </div>
+
+            <div class="field-group">
+                <label>Contraseña</label>
+                <div class="input-wrap">
+                    <span class="input-icon">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    </span>
+                    <input type="password" name="password" placeholder="••••••••" />
+                </div>
+            </div>
+
+            <div th:if="${error != null}" class="message error">[[${error}]]</div>
+            <div th:if="${success != null}" class="message success">[[${success}]]</div>
+
+            <button type="submit" class="button primary full-width">Iniciar sesión</button>
+        </form>
+
+        <div class="auth-link-row">
+            ¿No tienes una cuenta?
+            <a th:href="@{/register}">Crear cuenta</a>
+        </div>
+    </section>
+</main>
+
+<script th:src="@{/js/smartpark.js}"></script>
+</body>
+</html>
