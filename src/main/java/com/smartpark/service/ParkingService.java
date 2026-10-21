@@ -13,14 +13,17 @@ import java.util.Map;
 public class ParkingService {
     private static final BigDecimal RATE_PER_MINUTE = new BigDecimal("0.10");
 
+    // Calcula el costo según la tarifa por minuto.
     public BigDecimal calculateCost(int minutes) {
         return RATE_PER_MINUTE.multiply(BigDecimal.valueOf(minutes)).setScale(2, RoundingMode.HALF_UP);
     }
 
+    // Presenta un importe con el formato monetario de SmartPark.
     public String formatCurrency(BigDecimal amount) {
         return String.format("S/ %.2f", amount.setScale(2, RoundingMode.HALF_UP));
     }
 
+    // Convierte minutos totales a una etiqueta legible de horas y minutos.
     public String formatMinutes(int totalMinutes) {
         int hours = totalMinutes / 60;
         int minutes = totalMinutes % 60;
@@ -33,6 +36,7 @@ public class ParkingService {
         return hours + " h " + minutes + " min";
     }
 
+    // Proporciona los promedios demostrativos de permanencia para cada semana.
     public List<Map<String, Object>> buildWeeklyStayData() {
         List<Map<String, Object>> data = new ArrayList<>();
         data.add(new LinkedHashMap<>() {{ put("semana", "Semana 1"); put("minutos", 80); }});
@@ -42,6 +46,7 @@ public class ParkingService {
         return data;
     }
 
+    // Proporciona la cantidad demostrativa de vehículos atendidos por día.
     public List<Map<String, Object>> buildDailyVehicleData() {
         List<Map<String, Object>> data = new ArrayList<>();
         data.add(new LinkedHashMap<>() {{ put("dia", "Lun"); put("vehiculos", 65); }});
@@ -54,6 +59,7 @@ public class ParkingService {
         return data;
     }
 
+    // Proporciona los ingresos demostrativos registrados de enero a octubre.
     public List<Map<String, Object>> buildMonthlyIncomeData() {
         List<Map<String, Object>> data = new ArrayList<>();
         data.add(new LinkedHashMap<>() {{ put("mes", "Ene"); put("monto", 4200); }});
@@ -69,6 +75,7 @@ public class ParkingService {
         return data;
     }
 
+    // Suma los ingresos mensuales demostrativos para obtener el total del año.
     public int getAnnualIncomeTotal() {
         return buildMonthlyIncomeData().stream()
                 .mapToInt(item -> ((Number) item.get("monto")).intValue())

@@ -17,10 +17,12 @@ public class UserService {
 
     private final List<RegisteredUser> users = new ArrayList<>();
 
+    // Inicializa el almacenamiento en memoria con la cuenta de administrador.
     public UserService() {
         users.add(new RegisteredUser("Administrador", "Sistema", DEFAULT_EMAIL, DEFAULT_PASSWORD));
     }
 
+    // Comprueba las credenciales contra las cuentas almacenadas en memoria.
     public boolean authenticate(String email, String password) {
         String normalizedEmail = normalizeEmail(email);
         return (DEFAULT_EMAIL.equalsIgnoreCase(normalizedEmail) && DEFAULT_PASSWORD.equals(password))
@@ -28,6 +30,7 @@ public class UserService {
                 && Objects.equals(user.getPassword(), password));
     }
 
+    // Valida y guarda un usuario nuevo en el almacenamiento en memoria.
     public RegisteredUser save(RegisteredUser user) {
         if (user == null) {
             throw new IllegalArgumentException("El usuario no puede ser nulo.");
@@ -54,10 +57,12 @@ public class UserService {
         return saved;
     }
 
+    // Devuelve una copia de los usuarios almacenados.
     public List<RegisteredUser> findAll() {
         return new ArrayList<>(users);
     }
 
+    // Limpia y convierte el correo a minúsculas para comparaciones consistentes.
     private String normalizeEmail(String email) {
         return email == null ? "" : email.trim().toLowerCase(Locale.ROOT);
     }

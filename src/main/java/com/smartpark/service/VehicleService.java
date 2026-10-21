@@ -15,6 +15,7 @@ public class VehicleService {
     private final List<Vehicle> vehicles = new ArrayList<>();
     private int nextIndex = 6;
 
+    // Carga los vehículos demostrativos iniciales en memoria.
     public VehicleService() {
         vehicles.add(new Vehicle("001", "Carlos Mendoza", "ABC-123", "08:35", 85));
         vehicles.add(new Vehicle("002", "María Torres", "XYZ-456", "10:20", 45));
@@ -23,10 +24,12 @@ public class VehicleService {
         vehicles.add(new Vehicle("005", "Luis Castillo", "GHI-654", "09:10", 185));
     }
 
+    // Devuelve una copia de todos los vehículos actualmente estacionados.
     public List<Vehicle> findAll() {
         return new ArrayList<>(vehicles);
     }
 
+    // Busca vehículos por nombre del cliente, placa o identificador.
     public List<Vehicle> findBySearch(String query) {
         String text = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
         if (text.isEmpty()) {
@@ -40,6 +43,7 @@ public class VehicleService {
                 .toList();
     }
 
+    // Valida y registra un vehículo nuevo en el estacionamiento.
     public Vehicle addVehicle(String cliente, String placa) {
         String customer = cliente == null ? "" : cliente.trim();
         String plate = placa == null ? "" : placa.trim().toUpperCase(Locale.ROOT);
@@ -54,6 +58,7 @@ public class VehicleService {
         return vehicle;
     }
 
+    // Actualiza el nombre del cliente y la placa de un vehículo registrado.
     public Vehicle updateVehicle(String id, String cliente, String placa) {
         Vehicle vehicle = vehicles.stream()
                 .filter(v -> v.getId().equals(id))
@@ -65,6 +70,7 @@ public class VehicleService {
         return vehicle;
     }
 
+    // Localiza un vehículo por su identificador.
     public Vehicle findById(String id) {
         return vehicles.stream()
                 .filter(v -> v.getId().equals(id))
@@ -72,23 +78,28 @@ public class VehicleService {
                 .orElse(null);
     }
 
+    // Retira del estacionamiento el vehículo indicado.
     public void removeVehicle(String id) {
         vehicles.removeIf(v -> v.getId().equals(id));
     }
 
+    // Cuenta los vehículos estacionados para calcular los espacios ocupados.
     public int getOccupiedSpaces() {
         return vehicles.size();
     }
 
+    // Calcula los espacios libres según la capacidad total del estacionamiento.
     public int getFreeSpaces() {
         return Math.max(0, CAPACITY - getOccupiedSpaces());
     }
 
+    // Calcula el porcentaje demostrativo de uso semanal de la capacidad.
     public double getWeeklyUsePercentage() {
         double weeklyUsed = 550.0;
         return Math.round((weeklyUsed / 700.0) * 10000.0) / 100.0;
     }
 
+    // Genera una hora de ingreso demostrativa dentro del horario de operación.
     public String randomHour() {
         Random random = new Random();
         int hour = 7 + random.nextInt(11);
