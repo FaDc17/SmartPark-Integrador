@@ -27,18 +27,20 @@
         <h1>Procesar pago</h1>
     </div>
 
+    <div class="message error" th:if="${error != null}" th:text="${error}"></div>
+
     <section class="panel summary-panel">
         <h2>Resumen del estacionamiento</h2>
         <div class="summary-grid">
             <div><span>Cliente</span><strong th:text="${vehicle.cliente}">Carlos Mendoza</strong></div>
             <div><span>Placa</span><strong th:text="${vehicle.placa}">ABC-123</strong></div>
-            <div><span>Hora de ingreso</span><strong th:text="${vehicle.horaIngreso}">08:35</strong></div>
+            <div><span>Hora de ingreso</span><strong th:text="${#temporals.format(vehicle.horaIngreso, 'HH:mm')}">08:35</strong></div>
             <div><span>Tiempo estacionado</span><strong th:text="${T(java.lang.String).format('%d h %d min', vehicle.minutos / 60, vehicle.minutos % 60)}">1 h 25 min</strong></div>
             <div class="wide"><span>Total a pagar</span><strong class="total-amount" th:text="${totalText}">S/ 8.50</strong></div>
         </div>
     </section>
 
-    <section class="panel method-panel">
+    <section class="panel method-panel" th:classappend="${payment != null} ? 'hidden' : ''">
         <h2>Método de pago</h2>
         <div class="method-options">
             <button type="button" class="method-option active" data-method="efectivo">
@@ -56,6 +58,8 @@
         </div>
 
         <div class="method-panel-content active" data-content="efectivo">
+            <form th:action="@{'/pago/' + ${vehicle.id} + '/confirmar'}" method="post">
+                <input type="hidden" name="metodoPago" value="efectivo" />
             <div class="amount-row">
                 <span>Total a pagar:</span>
                 <strong th:text="${totalText}">S/ 8.50</strong>
@@ -64,14 +68,17 @@
                 <label>Monto recibido</label>
                 <div class="input-wrap">
                     <span class="input-icon small-icon">S/</span>
-                    <input type="number" id="montoRecibido" step="0.01" placeholder="S/ 0.00" />
+                    <input type="number" id="montoRecibido" name="montoRecibido" step="0.01" min="0" required placeholder="S/ 0.00" />
                 </div>
             </div>
             <div id="efectivoResult" class="amount-result hidden"></div>
-            <button type="button" class="button primary process-payment" data-payment-method="efectivo">Procesar pago</button>
+            <button type="submit" class="button primary process-payment" data-payment-method="efectivo">Procesar pago</button>
+            </form>
         </div>
 
         <div class="method-panel-content" data-content="yape">
+            <form th:action="@{'/pago/' + ${vehicle.id} + '/confirmar'}" method="post">
+                <input type="hidden" name="metodoPago" value="yape" />
             <p class="info-text">Escanea el código QR para realizar el pago.</p>
             <div class="qr-box">
                 <svg viewBox="0 0 160 160" aria-hidden="true">
@@ -147,10 +154,13 @@
                 </svg>
             </div>
             <p class="info-total">Total: <strong th:text="${totalText}">S/ 8.50</strong></p>
-            <button type="button" class="button primary process-payment" data-payment-method="yape">Procesar pago</button>
+            <button type="submit" class="button primary process-payment" data-payment-method="yape">Procesar pago</button>
+            </form>
         </div>
 
         <div class="method-panel-content" data-content="tarjeta">
+            <form th:action="@{'/pago/' + ${vehicle.id} + '/confirmar'}" method="post">
+                <input type="hidden" name="metodoPago" value="tarjeta" />
             <div class="amount-row">
                 <span>Total a pagar:</span>
                 <strong th:text="${totalText}">S/ 8.50</strong>
@@ -165,11 +175,12 @@
                     <span>Esperando pago...</span>
                 </div>
             </div>
-            <button type="button" class="button primary process-payment" data-payment-method="tarjeta">Confirmar pago</button>
+            <button type="submit" class="button primary process-payment" data-payment-method="tarjeta">Confirmar pago</button>
+            </form>
         </div>
     </section>
 
-    <section class="receipt-card hidden" id="receiptCard">
+    <section class="receipt-card" id="receiptCard" th:classappend="${payment == null} ? 'hidden' : ''">
         <div class="receipt-header">
             <div class="brand brand-small white-brand">
                 <span class="brand-mark">P</span>
@@ -178,17 +189,17 @@
             <p>Comprobante de estacionamiento</p>
         </div>
         <div class="receipt-body">
-            <div class="receipt-row"><span>Código único</span><strong id="receiptCode">SP-2026-000001</strong></div>
-            <div class="receipt-row"><span>Cliente</span><strong id="receiptCliente">Carlos Mendoza</strong></div>
-            <div class="receipt-row"><span>Placa</span><strong id="receiptPlaca">ABC-123</strong></div>
-            <div class="receipt-row"><span>Tiempo estacionado</span><strong id="receiptTiempo">01 h 25 min</strong></div>
-            <div class="receipt-row"><span>Total</span><strong id="receiptTotal">S/ 8.50</strong></div>
-            <div class="receipt-row"><span>Método de pago</span><strong id="receiptMethod">Efectivo</strong></div>
-            <div class="receipt-row"><span>Fecha</span><strong id="receiptFecha">21/10/2026</strong></div>
-            <div class="receipt-row"><span>Hora</span><strong id="receiptHora">12:00</strong></div>
-            <div class="receipt-row"><span>Estado</span><strong id="receiptEstado">PAGADO</strong></div>
+            <div class="receipt-row"><span>Código único</span><strong id="receiptCode" th:text="${payment != null ? payment.codigoPago : 'SP-2026-576450'}">SP-2026-576450</strong></div>
+            <div class="receipt-row"><span>Cliente</span><strong id="receiptCliente" th:text="${detail != null ? detail.cliente : vehicle.cliente}">Carlos Mendoza</strong></div>
+            <div class="receipt-row"><span>Placa</span><strong id="receiptPlaca" th:text="${detail != null ? detail.placa : vehicle.placa}">ABC-123</strong></div>
+            <div class="receipt-row"><span>Tiempo estacionado</span><strong id="receiptTiempo" th:text="${receiptTimeText}">1 h 25 min</strong></div>
+            <div class="receipt-row"><span>Total</span><strong id="receiptTotal" th:text="${receiptTotalText}">S/ 8.50</strong></div>
+            <div class="receipt-row"><span>Método de pago</span><strong id="receiptMethod" th:text="${payment != null ? payment.metodoPago : 'Efectivo'}">Efectivo</strong></div>
+            <div class="receipt-row"><span>Fecha</span><strong id="receiptFecha" th:text="${payment != null ? #temporals.format(payment.fechaPago, 'dd/MM/yyyy') : ''}">21/10/2026</strong></div>
+            <div class="receipt-row"><span>Hora</span><strong id="receiptHora" th:text="${payment != null ? #temporals.format(payment.fechaPago, 'HH:mm') : ''}">12:00</strong></div>
+            <div class="receipt-row"><span>Estado</span><strong id="receiptEstado" th:text="${payment != null ? payment.estado : 'PAGADO'}">PAGADO</strong></div>
             <div class="receipt-divider"></div>
-            <div class="receipt-total"><span>Total</span><strong id="receiptTotalLarge">S/ 8.50</strong></div>
+            <div class="receipt-total"><span>Total</span><strong id="receiptTotalLarge" th:text="${receiptTotalText}">S/ 8.50</strong></div>
             <div class="receipt-status">✓ PAGADO</div>
             <div class="receipt-divider"></div>
             <p class="thank-you">Gracias por utilizar SmartPark</p>

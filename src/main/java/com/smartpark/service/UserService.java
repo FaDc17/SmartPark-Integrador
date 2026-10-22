@@ -1,9 +1,10 @@
 package com.smartpark.service;
 
 import com.smartpark.model.RegisteredUser;
+import com.smartpark.repository.UsuarioRepository;
+import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -15,22 +16,30 @@ public class UserService {
     private static final String DEFAULT_EMAIL = "admin";
     private static final String DEFAULT_PASSWORD = "123456";
 
-    private final List<RegisteredUser> users = new ArrayList<>();
+    private final UsuarioRepository usuarioRepository;
 
-    // Inicializa el almacenamiento en memoria con la cuenta de administrador.
-    public UserService() {
-        users.add(new RegisteredUser("Administrador", "Sistema", DEFAULT_EMAIL, DEFAULT_PASSWORD));
+    public UserService(UsuarioRepository usuarioRepository) {
+        this.usuarioRepository = usuarioRepository;
     }
 
-    // Comprueba las credenciales contra las cuentas almacenadas en memoria.
+    // Conserva la cuenta inicial sin duplicarla ni modificar una existente.
+    @PostConstruct
+    public void ensureDefaultUser() {
+        if (!usuarioRepository.existsByEmailIgnoreCase(DEFAULT_EMAIL)) {
+            usuarioRepository.save(new RegisteredUser(
+                    "Administrador", "Sistema", DEFAULT_EMAIL, DEFAULT_PASSWORD));
+        }
+    }
+
+    // Comprueba las credenciales contra las cuentas persistidas en PostgreSQL.
     public boolean authenticate(String email, String password) {
         String normalizedEmail = normalizeEmail(email);
-        return (DEFAULT_EMAIL.equalsIgnoreCase(normalizedEmail) && DEFAULT_PASSWORD.equals(password))
-                || users.stream().anyMatch(user -> normalizeEmail(user.getEmail()).equals(normalizedEmail)
-                && Objects.equals(user.getPassword(), password));
+        return usuarioRepository.findByEmailIgnoreCase(normalizedEmail)
+                .map(user -> Objects.equals(user.getPassword(), password))
+                .orElse(false);
     }
 
-    // Valida y guarda un usuario nuevo en el almacenamiento en memoria.
+    // Valida los datos y guarda el usuario en PostgreSQL.
     public RegisteredUser save(RegisteredUser user) {
         if (user == null) {
             throw new IllegalArgumentException("El usuario no puede ser nulo.");
@@ -49,17 +58,16 @@ public class UserService {
         if (password.length() < 6) {
             throw new IllegalArgumentException("La contraseña debe tener al menos 6 caracteres.");
         }
-        if (DEFAULT_EMAIL.equalsIgnoreCase(email) || users.stream().anyMatch(u -> normalizeEmail(u.getEmail()).equals(email))) {
+        if (usuarioRepository.existsByEmailIgnoreCase(email)) {
             throw new IllegalArgumentException("Ya existe una cuenta registrada con este correo electrónico.");
         }
         RegisteredUser saved = new RegisteredUser(nombre, apellido, email, password);
-        users.add(saved);
-        return saved;
+        return usuarioRepository.save(saved);
     }
 
-    // Devuelve una copia de los usuarios almacenados.
+    // Consulta los usuarios persistidos en PostgreSQL.
     public List<RegisteredUser> findAll() {
-        return new ArrayList<>(users);
+        return usuarioRepository.findAll();
     }
 
     // Limpia y convierte el correo a minúsculas para comparaciones consistentes.

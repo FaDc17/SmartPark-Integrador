@@ -52,7 +52,7 @@
                 <td class="id-cell" th:text="${vehicle.id}">#001</td>
                 <td th:text="${vehicle.cliente}">Carlos Mendoza</td>
                 <td><span class="plate-tag" th:text="${vehicle.placa}">ABC-123</span></td>
-                <td th:text="${vehicle.horaIngreso}">08:35</td>
+                <td th:text="${#temporals.format(vehicle.horaIngreso, 'HH:mm')}">08:35</td>
                 <td th:text="${T(java.lang.String).format('%d h %d min', vehicle.minutos / 60, vehicle.minutos % 60)}">1 h 25 min</td>
                 <td class="price-cell" th:text="${'S/ ' + #numbers.formatDecimal(vehicle.minutos * 0.10, 1, 2)}">S/ 8.50</td>
                 <td>

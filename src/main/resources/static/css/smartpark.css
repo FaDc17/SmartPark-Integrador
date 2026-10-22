@@ -302,7 +302,8 @@ input:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(27,188,155,0
 .modal-header { display: flex; justify-content: space-between; align-items: center; }
 .modal-header h3 { margin: 0; font-size: 18px; }
 .close-modal { border: 1px solid var(--gray); background: white; border-radius: 8px; width: 32px; height: 32px; font-size: 20px; cursor: pointer; }
-.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+.modal-actions { display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+.modal-actions .button { flex: 1 1 120px; min-width: 0; }
 
 .payment-shell { max-width: 780px; }
 .summary-panel, .method-panel { padding: 22px 24px; margin-bottom: 18px; }

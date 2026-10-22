@@ -1,10 +1,11 @@
 package com.smartpark.service;
 
 import com.smartpark.model.Vehicle;
+import com.smartpark.repository.VehicleRepository;
+import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Comparator;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
@@ -12,38 +13,50 @@ import java.util.Random;
 @Service
 public class VehicleService {
     private static final int CAPACITY = 100;
-    private final List<Vehicle> vehicles = new ArrayList<>();
-    private int nextIndex = 6;
+    private final VehicleRepository vehicleRepository;
 
-    // Carga los vehículos demostrativos iniciales en memoria.
-    public VehicleService() {
-        vehicles.add(new Vehicle("001", "Carlos Mendoza", "ABC-123", "08:35", 85));
-        vehicles.add(new Vehicle("002", "María Torres", "XYZ-456", "10:20", 45));
-        vehicles.add(new Vehicle("003", "José Ramos", "BCD-789", "07:50", 130));
-        vehicles.add(new Vehicle("004", "Ana Gutiérrez", "DEF-321", "13:45", 20));
-        vehicles.add(new Vehicle("005", "Luis Castillo", "GHI-654", "09:10", 185));
+    public VehicleService(VehicleRepository vehicleRepository) {
+        this.vehicleRepository = vehicleRepository;
     }
 
-    // Devuelve una copia de todos los vehículos actualmente estacionados.
+    // Carga una sola vez los vehículos demostrativos que aún no existan en PostgreSQL.
+    @PostConstruct
+    public void ensureDemoVehicles() {
+        saveDemoVehicleIfMissing("Carlos Mendoza", "ABC-123", 85, 8, 35);
+        saveDemoVehicleIfMissing("María Torres", "XYZ-456", 45, 10, 20);
+        saveDemoVehicleIfMissing("José Ramos", "BCD-789", 130, 7, 50);
+        saveDemoVehicleIfMissing("Ana Gutiérrez", "DEF-321", 20, 13, 45);
+        saveDemoVehicleIfMissing("Luis Castillo", "GHI-654", 185, 9, 10);
+    }
+
+    private void saveDemoVehicleIfMissing(String cliente, String placa, int minutos, int hora, int minuto) {
+        if (!vehicleRepository.existsByPlaca(placa)) {
+            Vehicle vehicle = new Vehicle(cliente, placa, minutos);
+            vehicle.setHoraIngreso(LocalDate.now().atTime(hora, minuto));
+            vehicleRepository.save(vehicle);
+        }
+    }
+
+    // Consulta todos los vehículos actualmente estacionados en PostgreSQL.
     public List<Vehicle> findAll() {
-        return new ArrayList<>(vehicles);
+        return vehicleRepository.findActiveVehicles();
     }
 
-    // Busca vehículos por nombre del cliente, placa o identificador.
+    // Busca en los vehículos persistidos por cliente, placa o identificador.
     public List<Vehicle> findBySearch(String query) {
         String text = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
         if (text.isEmpty()) {
             return findAll();
         }
-        return vehicles.stream()
+        return vehicleRepository.findAll().stream()
                 .filter(v ->
                         v.getCliente().toLowerCase(Locale.ROOT).contains(text)
                                 || v.getPlaca().toLowerCase(Locale.ROOT).contains(text)
-                                || v.getId().contains(text))
+                                || v.getId().toString().contains(text))
                 .toList();
     }
 
-    // Valida y registra un vehículo nuevo en el estacionamiento.
+    // Valida y registra un vehículo nuevo; PostgreSQL genera su identificador.
     public Vehicle addVehicle(String cliente, String placa) {
         String customer = cliente == null ? "" : cliente.trim();
         String plate = placa == null ? "" : placa.trim().toUpperCase(Locale.ROOT);
@@ -52,40 +65,41 @@ public class VehicleService {
             throw new IllegalArgumentException("Ingresa el nombre del cliente y la placa del vehículo.");
         }
 
-        nextIndex += 1;
-        Vehicle vehicle = new Vehicle(String.format("%03d", nextIndex), customer, plate, randomHour(), 1);
-        vehicles.add(vehicle);
-        return vehicle;
+        return vehicleRepository.save(new Vehicle(customer, plate, 1));
     }
 
-    // Actualiza el nombre del cliente y la placa de un vehículo registrado.
+    // Actualiza los datos del vehículo persistido sin cambiar su identificador.
     public Vehicle updateVehicle(String id, String cliente, String placa) {
-        Vehicle vehicle = vehicles.stream()
-                .filter(v -> v.getId().equals(id))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Vehículo no encontrado."));
+        Vehicle vehicle = findById(id);
+        if (vehicle == null) {
+            throw new IllegalArgumentException("Vehículo no encontrado.");
+        }
 
         vehicle.setCliente(cliente == null ? vehicle.getCliente() : cliente.trim());
         vehicle.setPlaca(placa == null ? vehicle.getPlaca() : placa.trim().toUpperCase(Locale.ROOT));
-        return vehicle;
+        return vehicleRepository.save(vehicle);
     }
 
-    // Localiza un vehículo por su identificador.
+    // Busca un vehículo persistido por su ID numérico recibido desde la ruta.
     public Vehicle findById(String id) {
-        return vehicles.stream()
-                .filter(v -> v.getId().equals(id))
-                .findFirst()
-                .orElse(null);
+        try {
+            return vehicleRepository.findById(Long.parseLong(id)).orElse(null);
+        } catch (NumberFormatException ex) {
+            return null;
+        }
     }
 
-    // Retira del estacionamiento el vehículo indicado.
+    // Elimina de PostgreSQL el vehículo indicado por su ID.
     public void removeVehicle(String id) {
-        vehicles.removeIf(v -> v.getId().equals(id));
+        Vehicle vehicle = findById(id);
+        if (vehicle != null) {
+            vehicleRepository.delete(vehicle);
+        }
     }
 
-    // Cuenta los vehículos estacionados para calcular los espacios ocupados.
+    // Cuenta los vehículos persistidos para calcular los espacios ocupados.
     public int getOccupiedSpaces() {
-        return vehicles.size();
+        return Math.toIntExact(vehicleRepository.countActiveVehicles());
     }
 
     // Calcula los espacios libres según la capacidad total del estacionamiento.

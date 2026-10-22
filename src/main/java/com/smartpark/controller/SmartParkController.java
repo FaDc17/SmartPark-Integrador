@@ -1,6 +1,9 @@
 package com.smartpark.controller;
 
 import com.smartpark.model.Vehicle;
+import com.smartpark.model.DetallePago;
+import com.smartpark.model.Pago;
+import com.smartpark.service.PagoService;
 import com.smartpark.service.ParkingService;
 import com.smartpark.service.VehicleService;
 import jakarta.servlet.http.HttpSession;
@@ -14,15 +17,18 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 @Controller
 public class SmartParkController {
     private final VehicleService vehicleService;
     private final ParkingService parkingService;
+    private final PagoService pagoService;
 
-    public SmartParkController(VehicleService vehicleService, ParkingService parkingService) {
+    public SmartParkController(VehicleService vehicleService, ParkingService parkingService, PagoService pagoService) {
         this.vehicleService = vehicleService;
         this.parkingService = parkingService;
+        this.pagoService = pagoService;
     }
 
     private boolean isLoggedIn(HttpSession session) {
@@ -83,7 +89,10 @@ public class SmartParkController {
     }
 
     @GetMapping("/pago/{id}")
-    public String pago(@PathVariable String id, HttpSession session, Model model) {
+    public String pago(@PathVariable String id,
+                       @RequestParam(required = false) Long paymentId,
+                       HttpSession session,
+                       Model model) {
         if (!isLoggedIn(session)) {
             return "redirect:/login";
         }
@@ -92,10 +101,52 @@ public class SmartParkController {
             return "redirect:/modulo";
         }
         BigDecimal total = parkingService.calculateCost(vehicle.getMinutos());
+        Pago payment = null;
+        DetallePago detail = null;
+        if (paymentId != null) {
+            Optional<Pago> savedPayment = pagoService.findByIdAndVehicleId(paymentId, vehicle.getId());
+            if (savedPayment.isEmpty()) {
+                return "redirect:/modulo";
+            }
+            payment = savedPayment.get();
+            detail = pagoService.findDetailByPaymentId(payment.getId())
+                    .orElseThrow(() -> new IllegalStateException("El pago no tiene un detalle de boleta asociado."));
+        }
         model.addAttribute("vehicle", vehicle);
         model.addAttribute("total", total);
         model.addAttribute("totalText", parkingService.formatCurrency(total));
+        model.addAttribute("payment", payment);
+        model.addAttribute("detail", detail);
+        model.addAttribute("receiptTotalText", payment == null
+                ? parkingService.formatCurrency(total)
+                : parkingService.formatCurrency(payment.getMonto()));
+        model.addAttribute("receiptTimeText", detail == null
+                ? parkingService.formatMinutes(vehicle.getMinutos())
+                : parkingService.formatMinutes(detail.getMinutosEstacionado()));
         return "pago";
+    }
+
+    @PostMapping("/pago/{id}/confirmar")
+    public String confirmarPago(@PathVariable String id,
+                                @RequestParam String metodoPago,
+                                @RequestParam(required = false) BigDecimal montoRecibido,
+                                HttpSession session,
+                                RedirectAttributes redirectAttributes) {
+        if (!isLoggedIn(session)) {
+            return "redirect:/login";
+        }
+        Vehicle vehicle = vehicleService.findById(id);
+        if (vehicle == null) {
+            return "redirect:/modulo";
+        }
+        try {
+            Pago payment = pagoService.registrarPago(vehicle.getId(), metodoPago, montoRecibido);
+            redirectAttributes.addAttribute("paymentId", payment.getId());
+            return "redirect:/pago/" + vehicle.getId();
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+            return "redirect:/pago/" + vehicle.getId();
+        }
     }
 
     @PostMapping("/modulo")
@@ -122,7 +173,11 @@ public class SmartParkController {
         if (!isLoggedIn(session)) {
             return "redirect:/login";
         }
-        vehicleService.removeVehicle(id);
+        Vehicle vehicle = vehicleService.findById(id);
+        if (vehicle == null || !pagoService.hasPaymentForVehicle(vehicle.getId())) {
+            return "redirect:/pago/" + id;
+        }
+        // Mantiene el vehiculo por la clave foranea; los listados activos lo excluyen por su pago.
         return "redirect:/modulo";
     }
 
