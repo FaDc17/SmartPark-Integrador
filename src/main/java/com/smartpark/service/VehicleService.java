@@ -75,8 +75,12 @@ public class VehicleService {
             throw new IllegalArgumentException("Vehículo no encontrado.");
         }
 
-        vehicle.setCliente(cliente == null ? vehicle.getCliente() : cliente.trim());
-        vehicle.setPlaca(placa == null ? vehicle.getPlaca() : placa.trim().toUpperCase(Locale.ROOT));
+        if (cliente != null) {
+            vehicle.setCliente(cliente.trim());
+        }
+        if (placa != null) {
+            vehicle.setPlaca(placa.trim().toUpperCase(Locale.ROOT));
+        }
         return vehicleRepository.save(vehicle);
     }
 

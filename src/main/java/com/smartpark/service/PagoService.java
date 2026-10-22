@@ -100,16 +100,11 @@ public class PagoService {
     private String generatePaymentCode(int year) {
         String prefix = String.format(Locale.ROOT, "SP-%04d-", year);
         List<String> existingCodes = pagoRepository.findPaymentCodesByPrefix(prefix);
-        long nextNumber;
-        if (existingCodes.isEmpty()) {
-            nextNumber = INITIAL_PAYMENT_NUMBER;
-        } else {
-            long highestNumber = existingCodes.stream()
+        long highestNumber = existingCodes.stream()
                 .mapToLong(code -> parsePaymentNumber(code, prefix))
                 .max()
-                .orElseThrow();
-            nextNumber = Math.addExact(highestNumber, 1);
-        }
+                .orElse(INITIAL_PAYMENT_NUMBER - 1);
+        long nextNumber = Math.addExact(highestNumber, 1);
         return prefix + String.format(Locale.ROOT, "%06d", nextNumber);
     }
 
