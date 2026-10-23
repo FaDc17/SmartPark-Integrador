@@ -48,7 +48,7 @@ public class VehicleService {
         if (text.isEmpty()) {
             return findAll();
         }
-        return vehicleRepository.findAll().stream()
+        return findAll().stream()
                 .filter(v ->
                         v.getCliente().toLowerCase(Locale.ROOT).contains(text)
                                 || v.getPlaca().toLowerCase(Locale.ROOT).contains(text)

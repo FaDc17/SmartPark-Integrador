@@ -19,4 +19,6 @@ public interface PagoRepository extends JpaRepository<Pago, Long> {
     Optional<Pago> findByIdAndVehicle_Id(Long id, Long vehicleId);
 
     boolean existsByVehicle_Id(Long vehicleId);
+
+    Optional<Pago> findFirstByVehicle_IdOrderByIdDesc(Long vehicleId);
 }

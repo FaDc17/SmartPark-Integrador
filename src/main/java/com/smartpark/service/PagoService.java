@@ -38,10 +38,18 @@ public class PagoService {
     }
 
     // Registra el pago y su detalle histórico en una sola transacción.
+    // Es idempotente por estadía: si el vehículo ya tiene su pago (reenvío del formulario,
+    // doble clic o botón Atrás), devuelve ese mismo pago en vez de registrar otro.
+    // Una nueva estadía del mismo cliente se registra como un vehículo nuevo y paga normalmente.
     @Transactional
     public Pago registrarPago(Long vehicleId, String metodoPago, BigDecimal montoRecibido) {
-        Vehicle vehicle = vehicleRepository.findById(vehicleId)
+        // El bloqueo de la fila obliga a que dos envíos simultáneos se procesen uno tras otro.
+        Vehicle vehicle = vehicleRepository.findByIdForUpdate(vehicleId)
                 .orElseThrow(() -> new IllegalArgumentException("Vehículo no encontrado."));
+        Optional<Pago> existingPayment = pagoRepository.findFirstByVehicle_IdOrderByIdDesc(vehicleId);
+        if (existingPayment.isPresent()) {
+            return existingPayment.get();
+        }
         String paymentMethod = normalizePaymentMethod(metodoPago);
         BigDecimal total = parkingService.calculateCost(vehicle.getMinutos());
 
