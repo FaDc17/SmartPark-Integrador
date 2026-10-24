@@ -3,6 +3,7 @@ package com.smartpark.service;
 import com.smartpark.model.DetallePago;
 import com.smartpark.model.Pago;
 import com.smartpark.model.Vehicle;
+import com.smartpark.payment.MetodoPagoStrategy;
 import com.smartpark.repository.DetallePagoRepository;
 import com.smartpark.repository.PagoRepository;
 import com.smartpark.repository.VehicleRepository;
@@ -14,8 +15,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 public class PagoService {
@@ -26,15 +29,19 @@ public class PagoService {
     private final DetallePagoRepository detallePagoRepository;
     private final VehicleRepository vehicleRepository;
     private final ParkingService parkingService;
+    private final Map<String, MetodoPagoStrategy> metodos;
 
     public PagoService(PagoRepository pagoRepository,
                        DetallePagoRepository detallePagoRepository,
                        VehicleRepository vehicleRepository,
-                       ParkingService parkingService) {
+                       ParkingService parkingService,
+                       List<MetodoPagoStrategy> estrategias) {
         this.pagoRepository = pagoRepository;
         this.detallePagoRepository = detallePagoRepository;
         this.vehicleRepository = vehicleRepository;
         this.parkingService = parkingService;
+        this.metodos = estrategias.stream().collect(Collectors.toMap(
+                e -> e.getNombre().toLowerCase(Locale.ROOT), e -> e));
     }
 
     // Registra el pago y su detalle histórico en una sola transacción.
@@ -50,13 +57,11 @@ public class PagoService {
         if (existingPayment.isPresent()) {
             return existingPayment.get();
         }
-        String paymentMethod = normalizePaymentMethod(metodoPago);
-        BigDecimal total = parkingService.calculateCost(vehicle.getMinutos());
 
-        if ("Efectivo".equals(paymentMethod)
-                && (montoRecibido == null || montoRecibido.compareTo(total) < 0)) {
-            throw new IllegalArgumentException("El monto recibido no cubre el total a pagar.");
-        }
+        // Patrón Strategy: cada método de pago valida sus propias reglas.
+        MetodoPagoStrategy metodo = resolverMetodo(metodoPago);
+        BigDecimal total = parkingService.calculateCost(vehicle.getMinutos());
+        metodo.validar(total, montoRecibido);
 
         if (!pagoRepository.acquirePaymentCodeLock()) {
             throw new IllegalStateException("No se pudo bloquear la generación del código de pago.");
@@ -68,7 +73,7 @@ public class PagoService {
         pago.setCodigoPago(paymentCode);
         pago.setVehicle(vehicle);
         pago.setMonto(total);
-        pago.setMetodoPago(paymentMethod);
+        pago.setMetodoPago(metodo.getNombre());
         pago.setFechaPago(paymentTime);
         pago.setEstado("PAGADO");
         Pago savedPayment = pagoRepository.saveAndFlush(pago);
@@ -129,16 +134,15 @@ public class PagoService {
         }
     }
 
-    // Limita los métodos persistidos a las opciones que ofrece la interfaz.
-    private String normalizePaymentMethod(String method) {
-        if (method == null) {
+    // Selecciona la estrategia de pago según el método elegido en la interfaz.
+    private MetodoPagoStrategy resolverMetodo(String metodo) {
+        if (metodo == null) {
             throw new IllegalArgumentException("Selecciona un método de pago válido.");
         }
-        return switch (method.trim().toLowerCase(Locale.ROOT)) {
-            case "efectivo" -> "Efectivo";
-            case "yape" -> "Yape";
-            case "tarjeta" -> "Tarjeta";
-            default -> throw new IllegalArgumentException("Selecciona un método de pago válido.");
-        };
+        MetodoPagoStrategy estrategia = metodos.get(metodo.trim().toLowerCase(Locale.ROOT));
+        if (estrategia == null) {
+            throw new IllegalArgumentException("Selecciona un método de pago válido.");
+        }
+        return estrategia;
     }
 }

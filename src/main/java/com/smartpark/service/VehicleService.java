@@ -1,5 +1,6 @@
 package com.smartpark.service;
 
+import com.smartpark.config.ParkingConfig;
 import com.smartpark.model.Vehicle;
 import com.smartpark.repository.VehicleRepository;
 import jakarta.annotation.PostConstruct;
@@ -12,7 +13,6 @@ import java.util.Random;
 
 @Service
 public class VehicleService {
-    private static final int CAPACITY = 100;
     private final VehicleRepository vehicleRepository;
 
     public VehicleService(VehicleRepository vehicleRepository) {
@@ -106,9 +106,9 @@ public class VehicleService {
         return Math.toIntExact(vehicleRepository.countActiveVehicles());
     }
 
-    // Calcula los espacios libres según la capacidad total del estacionamiento.
+    // Calcula los espacios libres según la capacidad definida en el Singleton.
     public int getFreeSpaces() {
-        return Math.max(0, CAPACITY - getOccupiedSpaces());
+        return Math.max(0, ParkingConfig.getInstance().getCapacity() - getOccupiedSpaces());
     }
 
     // Calcula el porcentaje demostrativo de uso semanal de la capacidad.

@@ -35,6 +35,10 @@ public class SmartParkController {
         return session.getAttribute("loggedIn") != null;
     }
 
+    private boolean isAdmin(HttpSession session) {
+        return "ADMIN".equals(session.getAttribute("rol"));
+    }
+
     @GetMapping("/dashboard")
     public String dashboard(HttpSession session, Model model) {
         if (!isLoggedIn(session)) {
@@ -185,6 +189,10 @@ public class SmartParkController {
     public String datos(HttpSession session, Model model) {
         if (!isLoggedIn(session)) {
             return "redirect:/login";
+        }
+        // Datos y estadísticas: solo la cuenta de administrador.
+        if (!isAdmin(session)) {
+            return "redirect:/dashboard";
         }
         model.addAttribute("espaciosData", List.of(
                 java.util.Map.of("name", "Disponibles", "value", 32),

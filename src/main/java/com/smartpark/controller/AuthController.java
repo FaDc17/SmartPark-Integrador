@@ -42,13 +42,16 @@ public class AuthController {
             return "redirect:/login";
         }
 
-        if (!userService.authenticate(email, password)) {
+        RegisteredUser user = userService.authenticate(email, password);
+        if (user == null) {
             redirectAttributes.addFlashAttribute("error", "Las credenciales son incorrectas o el usuario no está registrado.");
             return "redirect:/login";
         }
 
         session.setAttribute("loggedIn", true);
-        session.setAttribute("username", email);
+        session.setAttribute("username", user.getEmail());
+        // Perfil: la cuenta única de administrador ve todo; el resto entra como cajero.
+        session.setAttribute("rol", userService.esAdmin(user.getEmail()) ? "ADMIN" : "CAJERO");
         return "redirect:/dashboard";
     }
 

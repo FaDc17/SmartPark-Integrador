@@ -23,8 +23,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (montoInput) {
+        const leerTotal = () => {
+            const texto = document.querySelector('.total-amount')?.textContent || '';
+            let limpio = texto.replace(/[^0-9.,]/g, '');
+            if (limpio.includes(',')) {
+                limpio = limpio.replace(/\./g, '').replace(',', '.');
+            }
+            const valor = parseFloat(limpio);
+            return Number.isNaN(valor) ? 0 : valor;
+        };
+
         montoInput.addEventListener('input', () => {
-            const total = Number(document.querySelector('.total-amount')?.textContent?.replace(/[^0-9.]/g, '') || 8.5);
+            const total = leerTotal();
             const received = Number(montoInput.value || 0);
             if (!montoInput.value) {
                 efectivoResult.classList.add('hidden');
@@ -78,4 +88,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    document.querySelectorAll('.toggle-password').forEach((button) => {
+        button.addEventListener('click', () => {
+            const input = button.parentElement.querySelector('input');
+            const show = input.type === 'password';
+            input.type = show ? 'text' : 'password';
+            button.classList.toggle('visible', show);
+            button.setAttribute('aria-label', show ? 'Ocultar contraseña' : 'Mostrar contraseña');
+        });
+    });
 });
