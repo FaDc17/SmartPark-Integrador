@@ -1,12 +1,12 @@
 package com.smartpark.service;
 
+import com.smartpark.dao.DetallePagoDao;
+import com.smartpark.dao.PagoDao;
+import com.smartpark.dao.VehicleDao;
 import com.smartpark.model.DetallePago;
 import com.smartpark.model.Pago;
 import com.smartpark.model.Vehicle;
 import com.smartpark.payment.MetodoPagoStrategy;
-import com.smartpark.repository.DetallePagoRepository;
-import com.smartpark.repository.PagoRepository;
-import com.smartpark.repository.VehicleRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,20 +25,21 @@ public class PagoService {
     private static final long INITIAL_PAYMENT_NUMBER = 576450L;
     private static final Pattern PAYMENT_NUMBER_PATTERN = Pattern.compile("\\d+");
 
-    private final PagoRepository pagoRepository;
-    private final DetallePagoRepository detallePagoRepository;
-    private final VehicleRepository vehicleRepository;
+
+    private final PagoDao pagoDao;
+    private final DetallePagoDao detallePagoDao;
+    private final VehicleDao vehicleDao;
     private final ParkingService parkingService;
     private final Map<String, MetodoPagoStrategy> metodos;
 
-    public PagoService(PagoRepository pagoRepository,
-                       DetallePagoRepository detallePagoRepository,
-                       VehicleRepository vehicleRepository,
+    public PagoService(PagoDao pagoDao,
+                       DetallePagoDao detallePagoDao,
+                       VehicleDao vehicleDao,
                        ParkingService parkingService,
                        List<MetodoPagoStrategy> estrategias) {
-        this.pagoRepository = pagoRepository;
-        this.detallePagoRepository = detallePagoRepository;
-        this.vehicleRepository = vehicleRepository;
+        this.pagoDao = pagoDao;
+        this.detallePagoDao = detallePagoDao;
+        this.vehicleDao = vehicleDao;
         this.parkingService = parkingService;
         this.metodos = estrategias.stream().collect(Collectors.toMap(
                 e -> e.getNombre().toLowerCase(Locale.ROOT), e -> e));
@@ -51,9 +52,9 @@ public class PagoService {
     @Transactional
     public Pago registrarPago(Long vehicleId, String metodoPago, BigDecimal montoRecibido) {
         // El bloqueo de la fila obliga a que dos envíos simultáneos se procesen uno tras otro.
-        Vehicle vehicle = vehicleRepository.findByIdForUpdate(vehicleId)
+        Vehicle vehicle = vehicleDao.findByIdForUpdate(vehicleId)
                 .orElseThrow(() -> new IllegalArgumentException("Vehículo no encontrado."));
-        Optional<Pago> existingPayment = pagoRepository.findFirstByVehicle_IdOrderByIdDesc(vehicleId);
+        Optional<Pago> existingPayment = pagoDao.findLatestByVehicleId(vehicleId);
         if (existingPayment.isPresent()) {
             return existingPayment.get();
         }
@@ -63,7 +64,7 @@ public class PagoService {
         BigDecimal total = parkingService.calculateCost(vehicle.getMinutos());
         metodo.validar(total, montoRecibido);
 
-        if (!pagoRepository.acquirePaymentCodeLock()) {
+        if (!pagoDao.acquirePaymentCodeLock()) {
             throw new IllegalStateException("No se pudo bloquear la generación del código de pago.");
         }
         String paymentCode = generatePaymentCode(LocalDate.now().getYear());
@@ -76,7 +77,7 @@ public class PagoService {
         pago.setMetodoPago(metodo.getNombre());
         pago.setFechaPago(paymentTime);
         pago.setEstado("PAGADO");
-        Pago savedPayment = pagoRepository.saveAndFlush(pago);
+        Pago savedPayment = pagoDao.saveAndFlush(pago);
 
         DetallePago detalle = new DetallePago();
         detalle.setPago(savedPayment);
@@ -86,7 +87,7 @@ public class PagoService {
         detalle.setHoraSalida(paymentTime);
         detalle.setMinutosEstacionado(vehicle.getMinutos());
         detalle.setTotal(total);
-        detallePagoRepository.save(detalle);
+        detallePagoDao.save(detalle);
 
         return savedPayment;
     }
@@ -94,25 +95,44 @@ public class PagoService {
     // Busca un pago y verifica que pertenezca al vehículo de la ruta.
     @Transactional(readOnly = true)
     public Optional<Pago> findByIdAndVehicleId(Long paymentId, Long vehicleId) {
-        return pagoRepository.findByIdAndVehicle_Id(paymentId, vehicleId);
+        return pagoDao.findByIdAndVehicleId(paymentId, vehicleId);
     }
 
     // Consulta el detalle histórico asociado al identificador del pago.
     @Transactional(readOnly = true)
     public Optional<DetallePago> findDetailByPaymentId(Long paymentId) {
-        return detallePagoRepository.findById(paymentId);
+        return detallePagoDao.findByPaymentId(paymentId);
     }
 
     // Comprueba si el vehículo ya tiene un pago que lo conserva en el historial.
     @Transactional(readOnly = true)
     public boolean hasPaymentForVehicle(Long vehicleId) {
-        return pagoRepository.existsByVehicle_Id(vehicleId);
+        return pagoDao.existsByVehicleId(vehicleId);
+    }
+
+    // Historial de clientes que ya pagaron; filtra por cliente, placa o ID del pago.
+    @Transactional(readOnly = true)
+    public List<DetallePago> findHistorial(String query) {
+        String text = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
+        List<DetallePago> all = detallePagoDao.findAllLatestFirst();
+        if (text.isEmpty()) {
+            return all;
+        }
+        return all.stream()
+                .filter(d -> contains(d.getCliente(), text)
+                        || contains(d.getPlaca(), text)
+                        || (d.getId() != null && d.getId().toString().contains(text)))
+                .toList();
+    }
+
+    private boolean contains(String value, String text) {
+        return value != null && value.toLowerCase(Locale.ROOT).contains(text);
     }
 
     // Obtiene el siguiente código correlativo mientras conserva el bloqueo transaccional.
     private String generatePaymentCode(int year) {
         String prefix = String.format(Locale.ROOT, "SP-%04d-", year);
-        List<String> existingCodes = pagoRepository.findPaymentCodesByPrefix(prefix);
+        List<String> existingCodes = pagoDao.findPaymentCodesByPrefix(prefix);
         long highestNumber = existingCodes.stream()
                 .mapToLong(code -> parsePaymentNumber(code, prefix))
                 .max()

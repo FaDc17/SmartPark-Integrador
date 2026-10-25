@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SmartPark - Historial</title>
+    <link rel="stylesheet" th:href="@{/css/smartpark.css}" />
+</head>
+<body>
+<nav class="main-navbar">
+    <div class="brand" aria-label="SmartPark logo">
+        <span class="brand-mark">P</span>
+        <span class="brand-text">Smart<span>Park</span></span>
+    </div>
+    <div class="nav-items">
+        <a class="nav-item" th:href="@{/dashboard}">Inicio</a>
+        <a class="nav-item" th:href="@{/registrar}">Registrar</a>
+        <a class="nav-item" th:href="@{/modulo}">Módulo</a>
+        <a class="nav-item active" th:href="@{/historial}">Historial</a>
+        <a class="nav-item" th:if="${session.rol == 'ADMIN'}" th:href="@{/datos}">Datos</a>
+        <a class="nav-item logout" th:href="@{/logout}">Salir</a>
+    </div>
+</nav>
+
+<main class="page-shell wide-shell">
+    <div class="section-header">
+        <h1>Historial de pagos</h1>
+        <p>Consulta los clientes que ya pagaron su estadía en el estacionamiento.</p>
+    </div>
+
+    <!-- Búsqueda en vivo: filtra mientras escribes (Enter también busca en el servidor) -->
+    <form class="search-box" th:action="@{/historial}" method="get" id="searchForm">
+        <span class="search-icon">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+        </span>
+        <input type="text" id="searchInput" name="search" th:value="${search}"
+               placeholder="Buscar por cliente, placa o ID..." autocomplete="off" />
+    </form>
+    <p class="search-count" id="searchCount" hidden></p>
+
+    <div class="table-panel">
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Código de pago</th>
+                <th>Cliente</th>
+                <th>Placa</th>
+                <th>Fecha</th>
+                <th>Hora de ingreso</th>
+                <th>Hora de salida</th>
+                <th>Tiempo de estancia</th>
+                <th>Método de pago</th>
+                <th>Costo</th>
+            </tr>
+            </thead>
+            <tbody id="vehicleRows">
+            <tr class="vehicle-row" th:each="item : ${historial}"
+                th:attr="data-search=${#strings.toLowerCase(item.cliente + ' ' + item.placa + ' ' + item.id)}">
+                <td class="id-cell" th:text="${item.id}">1</td>
+                <td th:text="${item.pago.codigoPago}">SP-2026-576450</td>
+                <td th:text="${item.cliente}">Carlos Mendoza</td>
+                <td><span class="plate-tag" th:text="${item.placa}">ABC-123</span></td>
+                <td th:text="${#temporals.format(item.pago.fechaPago, 'dd/MM/yyyy')}">24/10/2026</td>
+                <td th:text="${#temporals.format(item.horaIngreso, 'HH:mm')}">08:35</td>
+                <td th:text="${#temporals.format(item.horaSalida, 'HH:mm')}">10:00</td>
+                <td th:text="${T(java.lang.String).format('%d h %d min', item.minutosEstacionado / 60, item.minutosEstacionado % 60)}">1 h 25 min</td>
+                <td th:text="${item.pago.metodoPago}">Efectivo</td>
+                <td class="price-cell" th:text="${'S/ ' + #numbers.formatDecimal(item.total, 1, 2)}">S/ 8.50</td>
+            </tr>
+            <tr id="noResults" hidden>
+                <td colspan="10">No se encontraron pagos con esa búsqueda.</td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(historial)}">
+                <td colspan="10">Aún no hay pagos registrados.</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+
+<footer class="main-footer">© 2026 SmartPark. Todos los derechos reservados.</footer>
+<script th:src="@{/js/smartpark.js}"></script>
+<script>
+    // Búsqueda en vivo por ID, cliente o placa (sin recargar la página)
+    (function () {
+        var input = document.getElementById('searchInput');
+        var form = document.getElementById('searchForm');
+        var rows = document.querySelectorAll('#vehicleRows .vehicle-row');
+        var empty = document.getElementById('noResults');
+        var count = document.getElementById('searchCount');
+        if (!input) return;
+
+        function normalizar(t) {
+            return (t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+        }
+
+        function filtrar() {
+            var q = normalizar(input.value);
+            var visibles = 0;
+            rows.forEach(function (row) {
+                var ok = !q || normalizar(row.dataset.search).indexOf(q) !== -1;
+                row.hidden = !ok;
+                if (ok) visibles++;
+            });
+            empty.hidden = !(q && visibles === 0);
+            count.hidden = !q;
+            count.textContent = visibles + ' de ' + rows.length + ' pagos';
+        }
+
+        input.addEventListener('input', filtrar);
+        form.addEventListener('submit', function (e) { e.preventDefault(); filtrar(); });
+        filtrar();
+    })();
+</script>
+</body>
+</html>

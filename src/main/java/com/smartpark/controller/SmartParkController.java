@@ -185,6 +185,17 @@ public class SmartParkController {
         return "redirect:/modulo";
     }
 
+    // Historial de pagos (solo lectura): disponible para cajero y administrador.
+    @GetMapping("/historial")
+    public String historial(HttpSession session, Model model, @RequestParam(required = false) String search) {
+        if (!isLoggedIn(session)) {
+            return "redirect:/login";
+        }
+        model.addAttribute("historial", pagoService.findHistorial(search));
+        model.addAttribute("search", search == null ? "" : search);
+        return "historial";
+    }
+
     @GetMapping("/datos")
     public String datos(HttpSession session, Model model) {
         if (!isLoggedIn(session)) {

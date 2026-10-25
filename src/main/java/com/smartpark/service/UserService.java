@@ -2,6 +2,7 @@ package com.smartpark.service;
 
 import com.smartpark.model.RegisteredUser;
 import com.smartpark.repository.UsuarioRepository;
+
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
 
