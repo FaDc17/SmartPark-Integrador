@@ -1,8 +1,8 @@
 package com.smartpark.service;
 
 import com.smartpark.config.ParkingConfig;
+import com.smartpark.dao.VehicleDao;
 import com.smartpark.model.Vehicle;
-import com.smartpark.repository.VehicleRepository;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
 
@@ -13,10 +13,10 @@ import java.util.Random;
 
 @Service
 public class VehicleService {
-    private final VehicleRepository vehicleRepository;
+    private final VehicleDao vehicleDao;
 
-    public VehicleService(VehicleRepository vehicleRepository) {
-        this.vehicleRepository = vehicleRepository;
+    public VehicleService(VehicleDao vehicleDao) {
+        this.vehicleDao = vehicleDao;
     }
 
     // Carga una sola vez los vehículos demostrativos que aún no existan en PostgreSQL.
@@ -30,16 +30,16 @@ public class VehicleService {
     }
 
     private void saveDemoVehicleIfMissing(String cliente, String placa, int minutos, int hora, int minuto) {
-        if (!vehicleRepository.existsByPlaca(placa)) {
+        if (!vehicleDao.existsByPlaca(placa)) {
             Vehicle vehicle = new Vehicle(cliente, placa, minutos);
             vehicle.setHoraIngreso(LocalDate.now().atTime(hora, minuto));
-            vehicleRepository.save(vehicle);
+            vehicleDao.save(vehicle);
         }
     }
 
     // Consulta todos los vehículos actualmente estacionados en PostgreSQL.
     public List<Vehicle> findAll() {
-        return vehicleRepository.findActiveVehicles();
+        return vehicleDao.findActive();
     }
 
     // Busca en los vehículos persistidos por cliente, placa o identificador.
@@ -65,7 +65,7 @@ public class VehicleService {
             throw new IllegalArgumentException("Ingresa el nombre del cliente y la placa del vehículo.");
         }
 
-        return vehicleRepository.save(new Vehicle(customer, plate, 1));
+        return vehicleDao.save(new Vehicle(customer, plate, 1));
     }
 
     // Actualiza los datos del vehículo persistido sin cambiar su identificador.
@@ -81,13 +81,13 @@ public class VehicleService {
         if (placa != null) {
             vehicle.setPlaca(placa.trim().toUpperCase(Locale.ROOT));
         }
-        return vehicleRepository.save(vehicle);
+        return vehicleDao.save(vehicle);
     }
 
     // Busca un vehículo persistido por su ID numérico recibido desde la ruta.
     public Vehicle findById(String id) {
         try {
-            return vehicleRepository.findById(Long.parseLong(id)).orElse(null);
+            return vehicleDao.findById(Long.parseLong(id)).orElse(null);
         } catch (NumberFormatException ex) {
             return null;
         }
@@ -97,13 +97,13 @@ public class VehicleService {
     public void removeVehicle(String id) {
         Vehicle vehicle = findById(id);
         if (vehicle != null) {
-            vehicleRepository.delete(vehicle);
+            vehicleDao.delete(vehicle);
         }
     }
 
     // Cuenta los vehículos persistidos para calcular los espacios ocupados.
     public int getOccupiedSpaces() {
-        return Math.toIntExact(vehicleRepository.countActiveVehicles());
+        return Math.toIntExact(vehicleDao.countActive());
     }
 
     // Calcula los espacios libres según la capacidad definida en el Singleton.
