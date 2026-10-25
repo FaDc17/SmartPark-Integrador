@@ -27,6 +27,7 @@
         <a class="nav-item" th:href="@{/dashboard}">Inicio</a>
         <a class="nav-item" th:href="@{/registrar}">Registrar</a>
         <a class="nav-item active" th:href="@{/modulo}">Módulo</a>
+        <a class="nav-item" th:href="@{/historial}">Historial</a>
         <a class="nav-item" th:if="${session.rol == 'ADMIN'}" th:href="@{/datos}">Datos</a>
         <a class="nav-item logout" th:href="@{/logout}">Salir</a>
     </div>
