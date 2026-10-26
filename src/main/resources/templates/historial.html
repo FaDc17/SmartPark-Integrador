@@ -95,6 +95,7 @@
             return (t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
         }
 
+
         function filtrar() {
             var q = normalizar(input.value);
             var visibles = 0;
