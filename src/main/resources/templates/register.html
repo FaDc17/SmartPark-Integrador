@@ -19,7 +19,7 @@
     <main class="auth-shell">
         <section class="auth-card">
             <div class="auth-header">
-                <div class="brand brand-large">
+                <div class="brand brand-large login-brand">
                     <span class="brand-mark">P</span>
                     <span class="brand-text">Smart<span>Park</span></span>
                 </div>
@@ -27,20 +27,36 @@
                 <p>Completa tus datos para registrarte</p>
             </div>
 
-            
+
             <form th:action="@{/register}" method="post" class="smartpark-form">
                 <div class="split-cols">
                     <div class="field-group">
                         <label>Nombre</label>
-                        <input type="text" name="nombre" required minlength="2" maxlength="40"
-                            pattern="[A-Za-zÁÉÍÓÚáéíóúÑñÜü ]+" title="Solo letras, entre 2 y 40 caracteres"
-                            placeholder="Juan" />
+                        <div class="input-wrap">
+                            <span class="input-icon">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                            </span>
+                            <input type="text" name="nombre" required minlength="2" maxlength="40"
+                                pattern="[A-Za-zÁÉÍÓÚáéíóúÑñÜü ]+" title="Solo letras, entre 2 y 40 caracteres"
+                                placeholder="Juan" />
+                        </div>
                     </div>
                     <div class="field-group">
                         <label>Apellido</label>
-                        <input type="text" name="apellido" required minlength="2" maxlength="40"
-                            pattern="[A-Za-zÁÉÍÓÚáéíóúÑñÜü ]+" title="Solo letras, entre 2 y 40 caracteres"
-                            placeholder="Pérez" />
+                        <div class="input-wrap">
+                            <span class="input-icon">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                            </span>
+                            <input type="text" name="apellido" required minlength="2" maxlength="40"
+                                pattern="[A-Za-zÁÉÍÓÚáéíóúÑñÜü ]+" title="Solo letras, entre 2 y 40 caracteres"
+                                placeholder="Pérez" />
+                        </div>
                     </div>
                 </div>
 
