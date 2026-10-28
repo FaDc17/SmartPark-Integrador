@@ -31,10 +31,12 @@ public class SmartParkController {
         this.pagoService = pagoService;
     }
 
+    // Comprueba si existe una sesión de usuario iniciada.
     private boolean isLoggedIn(HttpSession session) {
         return session.getAttribute("loggedIn") != null;
     }
 
+    // Carga vehículos, ocupación, tarifas y datos del usuario para el dashboard.
     @GetMapping("/dashboard")
     public String dashboard(HttpSession session, Model model) {
         if (!isLoggedIn(session)) {
@@ -50,6 +52,7 @@ public class SmartParkController {
         return "dashboard";
     }
 
+    // Muestra el formulario para registrar un vehículo.
     @GetMapping("/registrar")
     public String registrar(HttpSession session, Model model) {
         if (!isLoggedIn(session)) {
@@ -59,6 +62,7 @@ public class SmartParkController {
         return "registrar";
     }
 
+    // Recibe los datos del formulario y registra el nuevo vehículo.
     @PostMapping("/registrar")
     public String registrarSubmit(@RequestParam String cliente,
                                  @RequestParam String placa,
@@ -77,6 +81,7 @@ public class SmartParkController {
         }
     }
 
+    // Lista los vehículos y permite filtrarlos mediante una búsqueda.
     @GetMapping("/modulo")
     public String modulo(HttpSession session, Model model, @RequestParam(required = false) String search) {
         if (!isLoggedIn(session)) {
@@ -88,6 +93,7 @@ public class SmartParkController {
         return "modulo";
     }
 
+    // Calcula el total y muestra los datos del vehículo, pago y boleta.
     @GetMapping("/pago/{id}")
     public String pago(@PathVariable String id,
                        @RequestParam(required = false) Long paymentId,
@@ -126,6 +132,7 @@ public class SmartParkController {
         return "pago";
     }
 
+    // Confirma el método de pago y registra el cobro del vehículo.
     @PostMapping("/pago/{id}/confirmar")
     public String confirmarPago(@PathVariable String id,
                                 @RequestParam String metodoPago,
@@ -149,6 +156,7 @@ public class SmartParkController {
         }
     }
 
+    // Actualiza los datos de un vehículo desde el modal.
     @PostMapping("/modulo")
     public String guardarVehiculoDesdeModal(@RequestParam String id,
                                            @RequestParam String cliente,
@@ -168,6 +176,7 @@ public class SmartParkController {
         }
     }
 
+    // Verifica el pago registrado y finaliza la salida del vehículo hacia el módulo.
     @PostMapping("/pago/{id}/finalizar")
     public String finalizarPago(@PathVariable String id, HttpSession session) {
         if (!isLoggedIn(session)) {
@@ -181,6 +190,7 @@ public class SmartParkController {
         return "redirect:/modulo";
     }
 
+    // Carga los datos estadísticos de ocupación, permanencia, vehículos e ingresos.
     @GetMapping("/datos")
     public String datos(HttpSession session, Model model) {
         if (!isLoggedIn(session)) {

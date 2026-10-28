@@ -18,11 +18,13 @@ public class AuthController {
         this.userService = userService;
     }
 
+    // Redirige la ruta principal al formulario de inicio de sesión.
     @GetMapping({"/", "/index"})
     public String index() {
         return "redirect:/login";
     }
 
+    // Muestra el inicio de sesión o redirige al dashboard si existe una sesión activa.
     @GetMapping("/login")
     public String loginPage(HttpSession session, Model model) {
         if (session.getAttribute("loggedIn") != null) {
@@ -32,6 +34,7 @@ public class AuthController {
         return "login";
     }
 
+    // Valida las credenciales y crea la sesión del usuario autenticado.
     @PostMapping("/login")
     public String login(@RequestParam(required = false) String email,
                         @RequestParam(required = false) String password,
@@ -52,12 +55,14 @@ public class AuthController {
         return "redirect:/dashboard";
     }
 
+    // Prepara el formulario y muestra la página de registro.
     @GetMapping("/register")
     public String registerPage(Model model) {
         model.addAttribute("user", new RegisteredUser());
         return "register";
     }
 
+    // Registra un nuevo usuario con los datos enviados por el formulario.
     @PostMapping("/register")
     public String register(@RequestParam String nombre,
                            @RequestParam String apellido,
@@ -74,6 +79,7 @@ public class AuthController {
         }
     }
 
+    // Invalida la sesión actual y devuelve al usuario al inicio de sesión.
     @GetMapping("/logout")
     public String logout(HttpSession session) {
         session.invalidate();
