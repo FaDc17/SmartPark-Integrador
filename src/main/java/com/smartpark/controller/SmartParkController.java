@@ -36,6 +36,11 @@ public class SmartParkController {
         return session.getAttribute("loggedIn") != null;
     }
 
+    // Comprueba si la sesión pertenece a un usuario administrador.
+    private boolean isAdmin(HttpSession session) {
+        return "ADMIN".equals(session.getAttribute("rol"));
+    }
+
     // Carga vehículos, ocupación, tarifas y datos del usuario para el dashboard.
     @GetMapping("/dashboard")
     public String dashboard(HttpSession session, Model model) {
@@ -190,11 +195,26 @@ public class SmartParkController {
         return "redirect:/modulo";
     }
 
+    // Muestra el historial de pagos a usuarios con una sesión iniciada.
+    @GetMapping("/historial")
+    public String historial(HttpSession session, Model model, @RequestParam(required = false) String search) {
+        if (!isLoggedIn(session)) {
+            return "redirect:/login";
+        }
+        model.addAttribute("historial", pagoService.findHistorial(search));
+        model.addAttribute("search", search == null ? "" : search);
+        return "historial";
+    }
+
     // Carga los datos estadísticos de ocupación, permanencia, vehículos e ingresos.
     @GetMapping("/datos")
     public String datos(HttpSession session, Model model) {
         if (!isLoggedIn(session)) {
             return "redirect:/login";
+        }
+        // Datos y estadísticas: solo la cuenta de administrador.
+        if (!isAdmin(session)) {
+            return "redirect:/dashboard";
         }
         model.addAttribute("espaciosData", List.of(
                 java.util.Map.of("name", "Disponibles", "value", 32),

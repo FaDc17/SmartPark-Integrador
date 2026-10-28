@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SmartPark - Datos y estadísticas</title>
     <link rel="stylesheet" th:href="@{/css/smartpark.css}" />
+    <style>
+        /* Separacion entre los recuadros de estadisticas */
+        .stats-page .dashboard-grid { gap: 24px; }
+        .stats-page .dashboard-grid + .dashboard-grid { margin-top: 24px; }
+        .stats-page .stats-kpis { gap: 24px; margin-bottom: 24px; }
+    </style>
 </head>
 <body>
 <nav class="main-navbar">
@@ -16,7 +22,8 @@
         <a class="nav-item" th:href="@{/dashboard}">Inicio</a>
         <a class="nav-item" th:href="@{/registrar}">Registrar</a>
         <a class="nav-item" th:href="@{/modulo}">Módulo</a>
-        <a class="nav-item active" th:href="@{/datos}">Datos</a>
+        <a class="nav-item" th:href="@{/historial}">Historial</a>
+        <a class="nav-item active" th:if="${session.rol == 'ADMIN'}" th:href="@{/datos}">Datos</a>
         <a class="nav-item logout" th:href="@{/logout}">Salir</a>
     </div>
 </nav>

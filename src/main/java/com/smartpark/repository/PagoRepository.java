@@ -20,4 +20,6 @@ public interface PagoRepository extends JpaRepository<Pago, Long> {
     Optional<Pago> findByIdAndVehicle_Id(Long id, Long vehicleId);
     // Comprueba si el vehículo ya tiene un pago registrado.
     boolean existsByVehicle_Id(Long vehicleId);
+
+    Optional<Pago> findFirstByVehicle_IdOrderByIdDesc(Long vehicleId);
 }

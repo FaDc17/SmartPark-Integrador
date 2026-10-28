@@ -16,10 +16,12 @@
         <a class="nav-item" th:href="@{/dashboard}">Inicio</a>
         <a class="nav-item" th:href="@{/registrar}">Registrar</a>
         <a class="nav-item active" th:href="@{/modulo}">Módulo</a>
-        <a class="nav-item" th:href="@{/datos}">Datos</a>
+        <a class="nav-item" th:href="@{/historial}">Historial</a>
+        <a class="nav-item" th:if="${session.rol == 'ADMIN'}" th:href="@{/datos}">Datos</a>
         <a class="nav-item logout" th:href="@{/logout}">Salir</a>
     </div>
 </nav>
+
 
 <main class="page-shell wide-shell">
     <div class="section-header">
@@ -27,12 +29,15 @@
         <p>Consulta y administra los vehículos que se encuentran actualmente dentro del estacionamiento.</p>
     </div>
 
-    <form class="search-box" th:action="@{/modulo}" method="get">
+    <!-- Búsqueda en vivo: filtra mientras escribes (Enter también busca en el servidor) -->
+    <form class="search-box" th:action="@{/modulo}" method="get" id="searchForm">
         <span class="search-icon">
             <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
         </span>
-        <input type="text" name="search" th:value="${search}" placeholder="Buscar por cliente, placa o ID..." />
+        <input type="text" id="searchInput" name="search" th:value="${search}"
+               placeholder="Buscar por cliente, placa o ID..." autocomplete="off" />
     </form>
+    <p class="search-count" id="searchCount" hidden></p>
 
     <div class="table-panel">
         <table>
@@ -47,8 +52,9 @@
                 <th>Acciones</th>
             </tr>
             </thead>
-            <tbody>
-            <tr th:each="vehicle : ${vehicles}">
+            <tbody id="vehicleRows">
+            <tr class="vehicle-row" th:each="vehicle : ${vehicles}"
+                th:attr="data-search=${#strings.toLowerCase(vehicle.cliente + ' ' + vehicle.placa + ' ' + vehicle.id)}">
                 <td class="id-cell" th:text="${vehicle.id}">#001</td>
                 <td th:text="${vehicle.cliente}">Carlos Mendoza</td>
                 <td><span class="plate-tag" th:text="${vehicle.placa}">ABC-123</span></td>
@@ -57,10 +63,20 @@
                 <td class="price-cell" th:text="${'S/ ' + #numbers.formatDecimal(vehicle.minutos * 0.10, 1, 2)}">S/ 8.50</td>
                 <td>
                     <div class="action-buttons">
-                        <button type="button" class="button ghost open-modal" th:attr="data-id=${vehicle.id},data-cliente=${vehicle.cliente},data-placa=${vehicle.placa}">Modificar</button>
-                        <a class="button primary small-button" th:href="@{'/pago/' + ${vehicle.id}}">Cobrar</a>
+                        <button type="button" class="button ghost open-modal"
+                                th:attr="data-id=${vehicle.id},data-cliente=${vehicle.cliente},data-placa=${vehicle.placa}">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
+                            Modificar
+                        </button>
+                        <a class="button primary" th:href="@{'/pago/' + ${vehicle.id}}">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"></rect><circle cx="12" cy="12" r="3"></circle></svg>
+                            Cobrar
+                        </a>
                     </div>
                 </td>
+            </tr>
+            <tr id="noResults" hidden>
+                <td colspan="7">No se encontraron vehículos con esa búsqueda.</td>
             </tr>
             </tbody>
         </table>
@@ -73,15 +89,25 @@
             <h3>Modificar vehículo</h3>
             <button type="button" class="close-modal" aria-label="Cerrar">×</button>
         </div>
-        <form id="modalForm" method="post" th:action="@{/modulo}">
+        <form id="modalForm" method="post" th:action="@{/modulo}" class="smartpark-form">
             <input type="hidden" id="modalVehicleId" name="id" />
             <div class="field-group">
                 <label>Nombre del cliente</label>
-                <input type="text" id="modalCliente" name="cliente" />
+                <div class="input-wrap">
+                    <span class="input-icon">
+                        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    </span>
+                    <input type="text" id="modalCliente" name="cliente" />
+                </div>
             </div>
             <div class="field-group">
                 <label>Placa del vehículo</label>
-                <input type="text" id="modalPlaca" name="placa" />
+                <div class="input-wrap">
+                    <span class="input-icon">
+                        <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="10" rx="2"></rect><path d="M6 7V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"></path><circle cx="8" cy="12" r="1"></circle><circle cx="16" cy="12" r="1"></circle></svg>
+                    </span>
+                    <input type="text" id="modalPlaca" name="placa" />
+                </div>
             </div>
             <div class="modal-actions">
                 <button type="button" class="button ghost close-modal">Cancelar</button>
@@ -93,5 +119,37 @@
 
 <footer class="main-footer">© 2026 SmartPark. Todos los derechos reservados.</footer>
 <script th:src="@{/js/smartpark.js}"></script>
+<script>
+    // Búsqueda en vivo por ID, cliente o placa (sin recargar la página)
+    (function () {
+        var input = document.getElementById('searchInput');
+        var form = document.getElementById('searchForm');
+        var rows = document.querySelectorAll('#vehicleRows .vehicle-row');
+        var empty = document.getElementById('noResults');
+        var count = document.getElementById('searchCount');
+        if (!input) return;
+
+        function normalizar(t) {
+            return (t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+        }
+
+        function filtrar() {
+            var q = normalizar(input.value);
+            var visibles = 0;
+            rows.forEach(function (row) {
+                var ok = !q || normalizar(row.dataset.search).indexOf(q) !== -1;
+                row.hidden = !ok;
+                if (ok) visibles++;
+            });
+            empty.hidden = !(q && visibles === 0);
+            count.hidden = !q;
+            count.textContent = visibles + ' de ' + rows.length + ' vehículos';
+        }
+
+        input.addEventListener('input', filtrar);
+        form.addEventListener('submit', function (e) { e.preventDefault(); filtrar(); });
+        filtrar();
+    })();
+</script>
 </body>
 </html>

@@ -1,5 +1,6 @@
 package com.smartpark.service;
 
+import com.smartpark.config.ParkingConfig;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -11,11 +12,12 @@ import java.util.Map;
 
 @Service
 public class ParkingService {
-    private static final BigDecimal RATE_PER_MINUTE = new BigDecimal("0.10");
 
-    // Calcula el costo según la tarifa por minuto.
+    // Calcula el costo según la tarifa por minuto definida en el Singleton.
     public BigDecimal calculateCost(int minutes) {
-        return RATE_PER_MINUTE.multiply(BigDecimal.valueOf(minutes)).setScale(2, RoundingMode.HALF_UP);
+        return ParkingConfig.getInstance().getRatePerMinute()
+                .multiply(BigDecimal.valueOf(minutes))
+                .setScale(2, RoundingMode.HALF_UP);
     }
 
     // Presenta un importe con el formato monetario de SmartPark.

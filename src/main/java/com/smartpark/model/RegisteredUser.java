@@ -1,4 +1,5 @@
 package com.smartpark.model;
+
 // Importa la anotación que indica que la clase será una entidad gestionada por JPA.
 import jakarta.persistence.Entity;
 // Importa la anotación que identifica la clave primaria de la entidad, nombre tabla y relacion atributo columna.
@@ -9,7 +10,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 
 @Entity
-@Table(name="Usuarios")
+@Table(name = "Usuarios")
 public class RegisteredUser {
 
     @Id
@@ -22,11 +23,12 @@ public class RegisteredUser {
     @Column(name = "apellido", nullable = false)
     private String apellido;
 
-    @Column(name="email", nullable = false, unique = true)
+    @Column(name = "email", nullable = false, unique = true)
     private String email;
 
-    @Column(name="password", nullable = false)
+    @Column(name = "password", nullable = false)
     private String password;
+
 
     public RegisteredUser() {
     }
@@ -38,11 +40,11 @@ public class RegisteredUser {
         this.password = password;
     }
 
-    public Long getId(){
+    public Long getId() {
         return id;
     }
 
-    public void setId(Long id){
+    public void setId(Long id) {
         this.id = id;
     }
 
