@@ -58,6 +58,7 @@ public class SmartParkController {
     }
 
     // Muestra el formulario para registrar un vehículo.
+    //actualizar
     @GetMapping("/registrar")
     public String registrar(HttpSession session, Model model) {
         if (!isLoggedIn(session)) {
@@ -87,6 +88,7 @@ public class SmartParkController {
     }
 
     // Lista los vehículos y permite filtrarlos mediante una búsqueda.
+    //busqueda
     @GetMapping("/modulo")
     public String modulo(HttpSession session, Model model, @RequestParam(required = false) String search) {
         if (!isLoggedIn(session)) {
@@ -162,6 +164,7 @@ public class SmartParkController {
     }
 
     // Actualiza los datos de un vehículo desde el modal.
+    //editar 
     @PostMapping("/modulo")
     public String guardarVehiculoDesdeModal(@RequestParam String id,
                                            @RequestParam String cliente,

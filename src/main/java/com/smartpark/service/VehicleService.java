@@ -93,6 +93,7 @@ public class VehicleService {
         }
     }
 
+    // eliminacion fisica
     // Elimina de PostgreSQL el vehículo indicado por su ID.
     public void removeVehicle(String id) {
         Vehicle vehicle = findById(id);
@@ -100,7 +101,6 @@ public class VehicleService {
             vehicleDao.delete(vehicle);
         }
     }
-
     // Cuenta los vehículos persistidos para calcular los espacios ocupados.
     public int getOccupiedSpaces() {
         return Math.toIntExact(vehicleDao.countActive());

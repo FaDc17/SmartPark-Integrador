@@ -18,6 +18,8 @@ public interface VehicleDao {
     /** Busca el vehículo bloqueando su fila hasta el fin de la transacción. */
     Optional<Vehicle> findByIdForUpdate(Long id);
 
+
+    
     /** Vehículos que todavía no tienen un pago registrado (siguen estacionados). */
     List<Vehicle> findActive();
 
