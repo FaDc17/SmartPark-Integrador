@@ -57,14 +57,12 @@ public class AuthController {
         session.setAttribute("rol", userService.esAdmin(user.getEmail()) ? "ADMIN" : "CAJERO");
         return "redirect:/dashboard";
     }
-
     // Prepara el formulario y muestra la página de registro.
     @GetMapping("/register")
     public String registerPage(Model model) {
         model.addAttribute("user", new RegisteredUser());
         return "register";
     }
-
     // Registra un nuevo usuario con los datos enviados por el formulario.
     @PostMapping("/register")
     public String register(@RequestParam String nombre,
@@ -88,4 +86,5 @@ public class AuthController {
         session.invalidate();
         return "redirect:/login";
     }
+    
 }

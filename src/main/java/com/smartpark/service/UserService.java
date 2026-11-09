@@ -89,7 +89,6 @@ public class UserService {
     public List<RegisteredUser> findAll() {
         return usuarioRepository.findAll();
     }
-
     // Valida longitud y que el nombre o apellido contenga solo letras y espacios.
     private void validarNombre(String valor, String etiqueta) {
         if (valor.length() < NAME_MIN || valor.length() > NAME_MAX) {
@@ -123,9 +122,9 @@ public class UserService {
             throw new IllegalArgumentException("La contraseña debe incluir al menos un carácter especial.");
         }
     }
-
     // Limpia y convierte el correo a minúsculas para comparaciones consistentes.
     private String normalizeEmail(String email) {
         return email == null ? "" : email.trim().toLowerCase(Locale.ROOT);
     }
+    
 }
